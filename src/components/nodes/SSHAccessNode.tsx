@@ -1,7 +1,8 @@
 import { Handle, Position, NodeResizer } from '@xyflow/react';
-import { Terminal, Key } from 'lucide-react';
+import { Terminal, Info } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SSHAccessNodeProps {
   data: {
@@ -50,24 +51,37 @@ export const SSHAccessNode = ({ data, selected }: SSHAccessNodeProps) => {
               <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
               <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>SSH Access</div>
             </div>
-          </div>
-
-          {data.host && (
-            <div className="font-mono bg-secondary/50 p-2 rounded" style={{ fontSize: `${scale * 0.75}rem` }}>
-              <div className="truncate">{data.host}:{data.port || 22}</div>
-              {data.username && (
-                <div className="text-muted-foreground mt-1">user: {data.username}</div>
-              )}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            {data.authType && (
-              <Badge variant="outline" className="gap-1" style={{ fontSize: `${scale * 0.75}rem` }}>
-                <Key style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} />
-                {data.authType}
-              </Badge>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="rounded-full hover:bg-secondary/80 p-1 transition-colors">
+                    <Info style={{ width: `${scale * 14}px`, height: `${scale * 14}px` }} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="space-y-2">
+                    {data.host && (
+                      <div>
+                        <div className="font-semibold text-xs">Host</div>
+                        <div className="text-xs font-mono">{data.host}:{data.port || 22}</div>
+                      </div>
+                    )}
+                    {data.username && (
+                      <div>
+                        <div className="font-semibold text-xs">Username</div>
+                        <div className="text-xs">{data.username}</div>
+                      </div>
+                    )}
+                    {data.authType && (
+                      <div>
+                        <div className="font-semibold text-xs">Auth Type</div>
+                        <div className="text-xs">{data.authType}</div>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

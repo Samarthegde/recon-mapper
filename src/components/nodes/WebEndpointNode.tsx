@@ -1,7 +1,8 @@
 import { Handle, Position, NodeResizer } from '@xyflow/react';
-import { Globe, Lock } from 'lucide-react';
+import { Globe, Info } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface WebEndpointNodeProps {
   data: {
@@ -46,34 +47,43 @@ export const WebEndpointNode = ({ data, selected }: WebEndpointNodeProps) => {
               <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
               <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>Web Endpoint</div>
             </div>
-          </div>
-
-          {data.url && (
-            <div className="font-mono bg-secondary/50 p-2 rounded truncate" style={{ fontSize: `${scale * 0.75}rem` }}>
-              {data.url}
-            </div>
-          )}
-
-          <div className="flex gap-2 flex-wrap">
-            {data.method && (
-              <Badge variant="secondary" style={{ fontSize: `${scale * 0.75}rem` }}>
-                {data.method}
-              </Badge>
-            )}
-            {data.authType && data.authType !== 'none' && (
-              <Badge variant="outline" className="gap-1" style={{ fontSize: `${scale * 0.75}rem` }}>
-                <Lock style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} />
-                {data.authType}
-              </Badge>
-            )}
-            {data.status && (
-              <Badge
-                variant={data.status < 400 ? "default" : "destructive"}
-                style={{ fontSize: `${scale * 0.75}rem` }}
-              >
-                {data.status}
-              </Badge>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="rounded-full hover:bg-secondary/80 p-1 transition-colors">
+                    <Info style={{ width: `${scale * 14}px`, height: `${scale * 14}px` }} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="space-y-2">
+                    {data.url && (
+                      <div>
+                        <div className="font-semibold text-xs">URL</div>
+                        <div className="text-xs font-mono break-all">{data.url}</div>
+                      </div>
+                    )}
+                    {data.method && (
+                      <div>
+                        <div className="font-semibold text-xs">Method</div>
+                        <div className="text-xs">{data.method}</div>
+                      </div>
+                    )}
+                    {data.authType && data.authType !== 'none' && (
+                      <div>
+                        <div className="font-semibold text-xs">Auth Type</div>
+                        <div className="text-xs">{data.authType}</div>
+                      </div>
+                    )}
+                    {data.status && (
+                      <div>
+                        <div className="font-semibold text-xs">Status</div>
+                        <div className="text-xs">{data.status}</div>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
