@@ -72,19 +72,33 @@ const Index = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  // Sync node dimensions to data when resized
-  useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          width: node.width || node.data.width,
-          height: node.height || node.data.height,
-        },
-      }))
-    );
-  }, [nodes.length, setNodes]);
+  // Handle node changes and sync dimensions to data
+  const handleNodesChange = useCallback(
+    (changes: any) => {
+      onNodesChange(changes);
+      
+      // Sync node dimensions after resize
+      changes.forEach((change: any) => {
+        if (change.type === 'dimensions' && change.dimensions) {
+          setNodes((nds) =>
+            nds.map((node) =>
+              node.id === change.id
+                ? {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      width: change.dimensions.width,
+                      height: change.dimensions.height,
+                    },
+                  }
+                : node
+            )
+          );
+        }
+      });
+    },
+    [onNodesChange, setNodes]
+  );
 
 
   const onConnect = useCallback(
@@ -246,7 +260,7 @@ const Index = () => {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={handleNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeDoubleClick={onNodeDoubleClick}
