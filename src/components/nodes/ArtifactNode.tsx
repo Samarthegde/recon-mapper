@@ -24,8 +24,10 @@ export const ArtifactNode = ({ data, selected }: ArtifactNodeProps) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
   };
 
+  const defaultWidth = 256;
+  const scale = (data.width || defaultWidth) / defaultWidth;
   const style = {
-    width: data.width || 256,
+    width: data.width || defaultWidth,
     height: data.height || 'auto',
   };
 
@@ -46,38 +48,38 @@ export const ArtifactNode = ({ data, selected }: ArtifactNodeProps) => {
       <Card className="border-2 border-node-artifact bg-card/95 backdrop-blur h-full">
         <Handle type="target" position={Position.Top} className="!bg-node-artifact" />
 
-        <div className="p-3 space-y-2">
+        <div className="p-3 space-y-2" style={{ fontSize: `${scale}rem` }}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-node-artifact/20 flex items-center justify-center">
-              <FileText className="w-4 h-4 text-node-artifact" />
+            <div className="rounded bg-node-artifact/20 flex items-center justify-center" style={{ width: `${scale * 32}px`, height: `${scale * 32}px` }}>
+              <FileText style={{ width: `${scale * 16}px`, height: `${scale * 16}px` }} className="text-node-artifact" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm truncate">{data.label}</div>
-              <div className="text-xs text-muted-foreground">Artifact</div>
+              <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
+              <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>Artifact</div>
             </div>
           </div>
 
           {data.filePath && (
-            <div className="text-xs font-mono bg-secondary/50 p-2 rounded truncate">
+            <div className="font-mono bg-secondary/50 p-2 rounded truncate" style={{ fontSize: `${scale * 0.75}rem` }}>
               {data.filePath}
             </div>
           )}
 
           {data.hash && (
-            <div className="text-xs font-mono bg-secondary/50 p-2 rounded flex items-center gap-2">
-              <Hash className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+            <div className="font-mono bg-secondary/50 p-2 rounded flex items-center gap-2" style={{ fontSize: `${scale * 0.75}rem` }}>
+              <Hash style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} className="text-muted-foreground flex-shrink-0" />
               <span className="truncate">{data.hash.substring(0, 16)}...</span>
             </div>
           )}
 
           <div className="flex gap-2 flex-wrap">
             {data.fileType && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" style={{ fontSize: `${scale * 0.75}rem` }}>
                 {data.fileType}
               </Badge>
             )}
             {data.size && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" style={{ fontSize: `${scale * 0.75}rem` }}>
                 {formatSize(data.size)}
               </Badge>
             )}

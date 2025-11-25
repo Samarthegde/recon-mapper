@@ -17,8 +17,10 @@ interface RDPAccessNodeProps {
 }
 
 export const RDPAccessNode = ({ data, selected }: RDPAccessNodeProps) => {
+  const defaultWidth = 256;
+  const scale = (data.width || defaultWidth) / defaultWidth;
   const style = {
-    width: data.width || 256,
+    width: data.width || defaultWidth,
     height: data.height || 'auto',
   };
 
@@ -39,19 +41,19 @@ export const RDPAccessNode = ({ data, selected }: RDPAccessNodeProps) => {
       <Card className="border-2 border-node-rdp bg-card/95 backdrop-blur h-full">
         <Handle type="target" position={Position.Top} className="!bg-node-rdp" />
 
-        <div className="p-3 space-y-2">
+        <div className="p-3 space-y-2" style={{ fontSize: `${scale}rem` }}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-node-rdp/20 flex items-center justify-center">
-              <Monitor className="w-4 h-4 text-node-rdp" />
+            <div className="rounded bg-node-rdp/20 flex items-center justify-center" style={{ width: `${scale * 32}px`, height: `${scale * 32}px` }}>
+              <Monitor style={{ width: `${scale * 16}px`, height: `${scale * 16}px` }} className="text-node-rdp" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm truncate">{data.label}</div>
-              <div className="text-xs text-muted-foreground">RDP Access</div>
+              <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
+              <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>RDP Access</div>
             </div>
           </div>
 
           {data.host && (
-            <div className="text-xs font-mono bg-secondary/50 p-2 rounded">
+            <div className="font-mono bg-secondary/50 p-2 rounded" style={{ fontSize: `${scale * 0.75}rem` }}>
               <div className="truncate">{data.host}:{data.port || 3389}</div>
               {data.username && (
                 <div className="text-muted-foreground mt-1">
@@ -62,7 +64,7 @@ export const RDPAccessNode = ({ data, selected }: RDPAccessNodeProps) => {
           )}
 
           <div className="flex gap-2">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" style={{ fontSize: `${scale * 0.75}rem` }}>
               RDP
             </Badge>
           </div>

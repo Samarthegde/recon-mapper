@@ -17,8 +17,10 @@ interface SSHAccessNodeProps {
 }
 
 export const SSHAccessNode = ({ data, selected }: SSHAccessNodeProps) => {
+  const defaultWidth = 256;
+  const scale = (data.width || defaultWidth) / defaultWidth;
   const style = {
-    width: data.width || 256,
+    width: data.width || defaultWidth,
     height: data.height || 'auto',
   };
 
@@ -39,19 +41,19 @@ export const SSHAccessNode = ({ data, selected }: SSHAccessNodeProps) => {
       <Card className="border-2 border-node-ssh bg-card/95 backdrop-blur h-full">
         <Handle type="target" position={Position.Top} className="!bg-node-ssh" />
 
-        <div className="p-3 space-y-2">
+        <div className="p-3 space-y-2" style={{ fontSize: `${scale}rem` }}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-node-ssh/20 flex items-center justify-center">
-              <Terminal className="w-4 h-4 text-node-ssh" />
+            <div className="rounded bg-node-ssh/20 flex items-center justify-center" style={{ width: `${scale * 32}px`, height: `${scale * 32}px` }}>
+              <Terminal style={{ width: `${scale * 16}px`, height: `${scale * 16}px` }} className="text-node-ssh" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm truncate">{data.label}</div>
-              <div className="text-xs text-muted-foreground">SSH Access</div>
+              <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
+              <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>SSH Access</div>
             </div>
           </div>
 
           {data.host && (
-            <div className="text-xs font-mono bg-secondary/50 p-2 rounded">
+            <div className="font-mono bg-secondary/50 p-2 rounded" style={{ fontSize: `${scale * 0.75}rem` }}>
               <div className="truncate">{data.host}:{data.port || 22}</div>
               {data.username && (
                 <div className="text-muted-foreground mt-1">user: {data.username}</div>
@@ -61,8 +63,8 @@ export const SSHAccessNode = ({ data, selected }: SSHAccessNodeProps) => {
 
           <div className="flex gap-2">
             {data.authType && (
-              <Badge variant="outline" className="text-xs gap-1">
-                <Key className="w-3 h-3" />
+              <Badge variant="outline" className="gap-1" style={{ fontSize: `${scale * 0.75}rem` }}>
+                <Key style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} />
                 {data.authType}
               </Badge>
             )}
