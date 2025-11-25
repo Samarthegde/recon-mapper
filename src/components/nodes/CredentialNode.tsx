@@ -1,8 +1,7 @@
 import { Handle, Position, NodeResizer } from '@xyflow/react';
-import { Key, Eye, EyeOff } from 'lucide-react';
+import { Key, Info } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CredentialNodeProps {
   data: {
@@ -17,19 +16,8 @@ interface CredentialNodeProps {
 }
 
 export const CredentialNode = ({ data, selected }: CredentialNodeProps) => {
-  const [showValue, setShowValue] = useState(false);
-
-  const maskValue = (value: string) => {
-    if (!value) return '';
-    return showValue ? value : '•'.repeat(Math.min(value.length, 20));
-  };
-
   const defaultWidth = 256;
   const scale = (data.width || defaultWidth) / defaultWidth;
-  const style = {
-    width: data.width || defaultWidth,
-    height: data.height || 'auto',
-  };
 
   return (
     <div 
@@ -57,32 +45,37 @@ export const CredentialNode = ({ data, selected }: CredentialNodeProps) => {
               <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
               <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>Credential</div>
             </div>
-          </div>
-
-          {data.username && (
-            <div className="font-mono bg-secondary/50 p-2 rounded truncate" style={{ fontSize: `${scale * 0.75}rem` }}>
-              user: {data.username}
-            </div>
-          )}
-
-          {data.value && (
-            <div className="font-mono bg-secondary/50 p-2 rounded flex items-center justify-between gap-2" style={{ fontSize: `${scale * 0.75}rem` }}>
-              <span className="truncate">{maskValue(data.value)}</span>
-              <button
-                onClick={() => setShowValue(!showValue)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                {showValue ? <EyeOff style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} /> : <Eye style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} />}
-              </button>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            {data.type && (
-              <Badge variant="outline" style={{ fontSize: `${scale * 0.75}rem` }}>
-                {data.type}
-              </Badge>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="rounded-full hover:bg-secondary/80 p-1 transition-colors">
+                    <Info style={{ width: `${scale * 14}px`, height: `${scale * 14}px` }} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="space-y-2">
+                    {data.type && (
+                      <div>
+                        <div className="font-semibold text-xs">Type</div>
+                        <div className="text-xs">{data.type}</div>
+                      </div>
+                    )}
+                    {data.username && (
+                      <div>
+                        <div className="font-semibold text-xs">Username</div>
+                        <div className="text-xs font-mono">{data.username}</div>
+                      </div>
+                    )}
+                    {data.value && (
+                      <div>
+                        <div className="font-semibold text-xs">Value</div>
+                        <div className="text-xs font-mono break-all">{'•'.repeat(Math.min(data.value.length, 30))}</div>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

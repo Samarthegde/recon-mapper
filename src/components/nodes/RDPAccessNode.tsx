@@ -1,6 +1,7 @@
 import { Handle, Position, NodeResizer } from '@xyflow/react';
-import { Monitor } from 'lucide-react';
+import { Monitor, Info } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 
 interface RDPAccessNodeProps {
@@ -50,23 +51,31 @@ export const RDPAccessNode = ({ data, selected }: RDPAccessNodeProps) => {
               <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
               <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>RDP Access</div>
             </div>
-          </div>
-
-          {data.host && (
-            <div className="font-mono bg-secondary/50 p-2 rounded" style={{ fontSize: `${scale * 0.75}rem` }}>
-              <div className="truncate">{data.host}:{data.port || 3389}</div>
-              {data.username && (
-                <div className="text-muted-foreground mt-1">
-                  {data.domain ? `${data.domain}\\` : ''}{data.username}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Badge variant="secondary" style={{ fontSize: `${scale * 0.75}rem` }}>
-              RDP
-            </Badge>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="rounded-full hover:bg-secondary/80 p-1 transition-colors">
+                    <Info style={{ width: `${scale * 14}px`, height: `${scale * 14}px` }} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="space-y-2">
+                    {data.host && (
+                      <div>
+                        <div className="font-semibold text-xs">Host</div>
+                        <div className="text-xs font-mono">{data.host}:{data.port || 3389}</div>
+                      </div>
+                    )}
+                    {data.username && (
+                      <div>
+                        <div className="font-semibold text-xs">Username</div>
+                        <div className="text-xs">{data.domain ? `${data.domain}\\` : ''}{data.username}</div>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

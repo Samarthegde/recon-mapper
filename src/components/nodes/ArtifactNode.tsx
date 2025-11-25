@@ -1,7 +1,7 @@
 import { Handle, Position, NodeResizer } from '@xyflow/react';
-import { FileText, Hash } from 'lucide-react';
+import { FileText, Info } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ArtifactNodeProps {
   data: {
@@ -16,20 +16,16 @@ interface ArtifactNodeProps {
   selected?: boolean;
 }
 
-export const ArtifactNode = ({ data, selected }: ArtifactNodeProps) => {
-  const formatSize = (bytes?: number) => {
-    if (!bytes) return '';
-    if (bytes < 1024) return `${bytes}B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-  };
+const formatBytes = (bytes?: number) => {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+};
 
+export const ArtifactNode = ({ data, selected }: ArtifactNodeProps) => {
   const defaultWidth = 256;
   const scale = (data.width || defaultWidth) / defaultWidth;
-  const style = {
-    width: data.width || defaultWidth,
-    height: data.height || 'auto',
-  };
 
   return (
     <div 
@@ -57,32 +53,43 @@ export const ArtifactNode = ({ data, selected }: ArtifactNodeProps) => {
               <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
               <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>Artifact</div>
             </div>
-          </div>
-
-          {data.filePath && (
-            <div className="font-mono bg-secondary/50 p-2 rounded truncate" style={{ fontSize: `${scale * 0.75}rem` }}>
-              {data.filePath}
-            </div>
-          )}
-
-          {data.hash && (
-            <div className="font-mono bg-secondary/50 p-2 rounded flex items-center gap-2" style={{ fontSize: `${scale * 0.75}rem` }}>
-              <Hash style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} className="text-muted-foreground flex-shrink-0" />
-              <span className="truncate">{data.hash.substring(0, 16)}...</span>
-            </div>
-          )}
-
-          <div className="flex gap-2 flex-wrap">
-            {data.fileType && (
-              <Badge variant="secondary" style={{ fontSize: `${scale * 0.75}rem` }}>
-                {data.fileType}
-              </Badge>
-            )}
-            {data.size && (
-              <Badge variant="outline" style={{ fontSize: `${scale * 0.75}rem` }}>
-                {formatSize(data.size)}
-              </Badge>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="rounded-full hover:bg-secondary/80 p-1 transition-colors">
+                    <Info style={{ width: `${scale * 14}px`, height: `${scale * 14}px` }} className="text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <div className="space-y-2">
+                    {data.filePath && (
+                      <div>
+                        <div className="font-semibold text-xs">File Path</div>
+                        <div className="text-xs font-mono break-all">{data.filePath}</div>
+                      </div>
+                    )}
+                    {data.fileType && (
+                      <div>
+                        <div className="font-semibold text-xs">Type</div>
+                        <div className="text-xs">{data.fileType}</div>
+                      </div>
+                    )}
+                    {data.size && (
+                      <div>
+                        <div className="font-semibold text-xs">Size</div>
+                        <div className="text-xs">{formatBytes(data.size)}</div>
+                      </div>
+                    )}
+                    {data.hash && (
+                      <div>
+                        <div className="font-semibold text-xs">Hash</div>
+                        <div className="text-xs font-mono break-all">{data.hash}</div>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
