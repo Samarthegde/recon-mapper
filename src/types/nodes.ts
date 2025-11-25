@@ -3,6 +3,8 @@ export type NodeType = 'web' | 'ssh' | 'rdp' | 'credential' | 'artifact';
 export interface BaseNodeData {
   label: string;
   description?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface WebEndpointData extends BaseNodeData {

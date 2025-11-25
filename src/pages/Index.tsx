@@ -44,6 +44,7 @@ const initialNodes: Node[] = [
       method: 'GET',
       authType: 'bearer',
       status: 200,
+      width: 256,
     },
   },
   {
@@ -54,6 +55,7 @@ const initialNodes: Node[] = [
       label: 'API Token',
       type: 'bearer',
       value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+      width: 256,
     },
   },
 ];
@@ -79,6 +81,8 @@ const Index = () => {
     setEditingNode(node);
     setIsEditDialogOpen(true);
   }, []);
+
+
 
   const handleSaveNode = useCallback((newData: any) => {
     if (!editingNode) return;
@@ -159,6 +163,7 @@ const Index = () => {
           url: 'https://example.com',
           method: 'GET',
           authType: 'none',
+          width: 256,
         };
       case 'ssh':
         return {
@@ -167,6 +172,7 @@ const Index = () => {
           port: 22,
           username: 'root',
           authType: 'key',
+          width: 256,
         };
       case 'rdp':
         return {
@@ -174,6 +180,7 @@ const Index = () => {
           host: '192.168.1.1',
           port: 3389,
           username: 'Administrator',
+          width: 256,
         };
       case 'credential':
         return {
@@ -181,6 +188,7 @@ const Index = () => {
           type: 'password',
           username: 'user',
           value: 'password123',
+          width: 256,
         };
       case 'artifact':
         return {
@@ -189,9 +197,10 @@ const Index = () => {
           fileType: 'text',
           hash: 'sha256:abcdef1234567890',
           size: 2048,
+          width: 256,
         };
       default:
-        return { label: 'New Node' };
+        return { label: 'New Node', width: 256 };
     }
   };
 
@@ -201,9 +210,6 @@ const Index = () => {
       
       <div className="flex-1 relative">
         <div className="absolute top-4 left-4 z-10 bg-card/95 backdrop-blur border border-border rounded-lg p-3 shadow-lg">
-          <h1 className="text-lg font-bold text-primary tracking-tight">
-            Forensic Intelligence Mapping
-          </h1>
           <p className="text-xs text-muted-foreground mt-1">
             Investigation Flow • {nodes.length} nodes • {edges.length} connections
           </p>
