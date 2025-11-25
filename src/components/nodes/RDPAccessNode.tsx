@@ -23,12 +23,20 @@ export const RDPAccessNode = ({ data, selected }: RDPAccessNodeProps) => {
   };
 
   return (
-    <>
-      {selected && <NodeResizer color="hsl(var(--node-rdp))" />}
-      <Card
-        className="border-2 border-node-rdp bg-card/95 backdrop-blur min-w-[200px]"
-        style={style}
-      >
+    <div 
+      style={{ 
+        width: data.width || 256, 
+        height: data.height || 'auto' 
+      }}
+    >
+      {selected && (
+        <NodeResizer 
+          color="hsl(var(--node-rdp))" 
+          minWidth={150}
+          minHeight={100}
+        />
+      )}
+      <Card className="border-2 border-node-rdp bg-card/95 backdrop-blur h-full">
         <Handle type="target" position={Position.Top} className="!bg-node-rdp" />
 
         <div className="p-3 space-y-2">
@@ -62,6 +70,6 @@ export const RDPAccessNode = ({ data, selected }: RDPAccessNodeProps) => {
 
         <Handle type="source" position={Position.Bottom} className="!bg-node-rdp" />
       </Card>
-    </>
+    </div>
   );
 };

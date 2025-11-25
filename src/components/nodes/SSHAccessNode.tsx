@@ -23,12 +23,20 @@ export const SSHAccessNode = ({ data, selected }: SSHAccessNodeProps) => {
   };
 
   return (
-    <>
-      {selected && <NodeResizer color="hsl(var(--node-ssh))" />}
-      <Card
-        className="border-2 border-node-ssh bg-card/95 backdrop-blur min-w-[200px]"
-        style={style}
-      >
+    <div 
+      style={{ 
+        width: data.width || 256, 
+        height: data.height || 'auto' 
+      }}
+    >
+      {selected && (
+        <NodeResizer 
+          color="hsl(var(--node-ssh))" 
+          minWidth={150}
+          minHeight={100}
+        />
+      )}
+      <Card className="border-2 border-node-ssh bg-card/95 backdrop-blur h-full">
         <Handle type="target" position={Position.Top} className="!bg-node-ssh" />
 
         <div className="p-3 space-y-2">
@@ -63,6 +71,6 @@ export const SSHAccessNode = ({ data, selected }: SSHAccessNodeProps) => {
 
         <Handle type="source" position={Position.Bottom} className="!bg-node-ssh" />
       </Card>
-    </>
+    </div>
   );
 };

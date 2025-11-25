@@ -17,18 +17,21 @@ interface WebEndpointNodeProps {
 }
 
 export const WebEndpointNode = ({ data, selected }: WebEndpointNodeProps) => {
-  const style = {
-    width: data.width || 256,
-    height: data.height || 'auto',
-  };
-
   return (
-    <>
-      {selected && <NodeResizer color="hsl(var(--node-web))" />}
-      <Card
-        className="border-2 border-node-web bg-card/95 backdrop-blur min-w-[200px]"
-        style={style}
-      >
+    <div 
+      style={{ 
+        width: data.width || 256, 
+        height: data.height || 'auto' 
+      }}
+    >
+      {selected && (
+        <NodeResizer 
+          color="hsl(var(--node-web))" 
+          minWidth={150}
+          minHeight={100}
+        />
+      )}
+      <Card className="border-2 border-node-web bg-card/95 backdrop-blur h-full">
         <Handle type="target" position={Position.Top} className="!bg-node-web" />
 
         <div className="p-3 space-y-2">
@@ -73,6 +76,6 @@ export const WebEndpointNode = ({ data, selected }: WebEndpointNodeProps) => {
 
         <Handle type="source" position={Position.Bottom} className="!bg-node-web" />
       </Card>
-    </>
+    </div>
   );
 };
