@@ -57,6 +57,18 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        node: {
+          web: "hsl(var(--node-web))",
+          ssh: "hsl(var(--node-ssh))",
+          rdp: "hsl(var(--node-rdp))",
+          credential: "hsl(var(--node-credential))",
+          artifact: "hsl(var(--node-artifact))",
+        },
+        canvas: {
+          bg: "hsl(var(--canvas-bg))",
+          grid: "hsl(var(--canvas-grid))",
+          line: "hsl(var(--canvas-line))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
