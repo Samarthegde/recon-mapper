@@ -17,6 +17,9 @@ interface WebEndpointNodeProps {
 }
 
 export const WebEndpointNode = ({ data, selected }: WebEndpointNodeProps) => {
+  const defaultWidth = 256;
+  const scale = (data.width || defaultWidth) / defaultWidth;
+  
   return (
     <div 
       style={{ 
@@ -34,39 +37,39 @@ export const WebEndpointNode = ({ data, selected }: WebEndpointNodeProps) => {
       <Card className="border-2 border-node-web bg-card/95 backdrop-blur h-full">
         <Handle type="target" position={Position.Top} className="!bg-node-web" />
 
-        <div className="p-3 space-y-2">
+        <div className="p-3 space-y-2" style={{ fontSize: `${scale}rem` }}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-node-web/20 flex items-center justify-center">
-              <Globe className="w-4 h-4 text-node-web" />
+            <div className="rounded bg-node-web/20 flex items-center justify-center" style={{ width: `${scale * 32}px`, height: `${scale * 32}px` }}>
+              <Globe style={{ width: `${scale * 16}px`, height: `${scale * 16}px` }} className="text-node-web" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm truncate">{data.label}</div>
-              <div className="text-xs text-muted-foreground">Web Endpoint</div>
+              <div className="font-semibold truncate" style={{ fontSize: `${scale * 0.875}rem` }}>{data.label}</div>
+              <div className="text-muted-foreground" style={{ fontSize: `${scale * 0.75}rem` }}>Web Endpoint</div>
             </div>
           </div>
 
           {data.url && (
-            <div className="text-xs font-mono bg-secondary/50 p-2 rounded truncate">
+            <div className="font-mono bg-secondary/50 p-2 rounded truncate" style={{ fontSize: `${scale * 0.75}rem` }}>
               {data.url}
             </div>
           )}
 
           <div className="flex gap-2 flex-wrap">
             {data.method && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" style={{ fontSize: `${scale * 0.75}rem` }}>
                 {data.method}
               </Badge>
             )}
             {data.authType && data.authType !== 'none' && (
-              <Badge variant="outline" className="text-xs gap-1">
-                <Lock className="w-3 h-3" />
+              <Badge variant="outline" className="gap-1" style={{ fontSize: `${scale * 0.75}rem` }}>
+                <Lock style={{ width: `${scale * 12}px`, height: `${scale * 12}px` }} />
                 {data.authType}
               </Badge>
             )}
             {data.status && (
               <Badge
                 variant={data.status < 400 ? "default" : "destructive"}
-                className="text-xs"
+                style={{ fontSize: `${scale * 0.75}rem` }}
               >
                 {data.status}
               </Badge>
