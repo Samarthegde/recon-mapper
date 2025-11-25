@@ -10,6 +10,7 @@ import {
   Connection,
   NodeTypes,
   Node,
+  NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Trash2 } from 'lucide-react';
@@ -20,6 +21,7 @@ import { SSHAccessNode } from '@/components/nodes/SSHAccessNode';
 import { RDPAccessNode } from '@/components/nodes/RDPAccessNode';
 import { CredentialNode } from '@/components/nodes/CredentialNode';
 import { ArtifactNode } from '@/components/nodes/ArtifactNode';
+import { NodeEditDialog } from '@/components/NodeEditDialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -64,12 +66,36 @@ const Index = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeId, setNodeId] = useState(3);
+  const [editingNode, setEditingNode] = useState<Node | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
+
+  const onNodeDoubleClick: NodeMouseHandler = useCallback((event, node) => {
+    setEditingNode(node);
+    setIsEditDialogOpen(true);
+  }, []);
+
+  const handleSaveNode = useCallback((newData: any) => {
+    if (!editingNode) return;
+
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === editingNode.id
+          ? { ...node, data: newData }
+          : node
+      )
+    );
+
+    toast({
+      title: "Node Updated",
+      description: "Node properties have been saved successfully",
+    });
+  }, [editingNode, setNodes, toast]);
 
   const onDeleteSelected = useCallback(() => {
     const selectedNodes = nodes.filter((node) => node.selected);
@@ -202,6 +228,7 @@ const Index = () => {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeDoubleClick={onNodeDoubleClick}
           nodeTypes={nodeTypes}
           fitView
           className="bg-canvas-bg"
@@ -222,6 +249,14 @@ const Index = () => {
             }}
           />
         </ReactFlow>
+
+        <NodeEditDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          nodeType={editingNode?.type || ''}
+          nodeData={editingNode?.data || {}}
+          onSave={handleSaveNode}
+        />
       </div>
     </div>
   );
