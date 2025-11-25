@@ -72,6 +72,20 @@ const Index = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  // Sync node dimensions to data when resized
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          width: node.width || node.data.width,
+          height: node.height || node.data.height,
+        },
+      }))
+    );
+  }, [nodes.length, setNodes]);
+
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
