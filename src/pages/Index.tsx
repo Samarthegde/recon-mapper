@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -12,6 +12,7 @@ import {
   Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { Trash2 } from 'lucide-react';
 
 import { NodePalette } from '@/components/NodePalette';
 import { WebEndpointNode } from '@/components/nodes/WebEndpointNode';
@@ -19,6 +20,8 @@ import { SSHAccessNode } from '@/components/nodes/SSHAccessNode';
 import { RDPAccessNode } from '@/components/nodes/RDPAccessNode';
 import { CredentialNode } from '@/components/nodes/CredentialNode';
 import { ArtifactNode } from '@/components/nodes/ArtifactNode';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 const nodeTypes: NodeTypes = {
   web: WebEndpointNode,
@@ -61,11 +64,48 @@ const Index = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [nodeId, setNodeId] = useState(3);
+  const { toast } = useToast();
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
+
+  const onDeleteSelected = useCallback(() => {
+    const selectedNodes = nodes.filter((node) => node.selected);
+    const selectedEdges = edges.filter((edge) => (edge as any).selected);
+    
+    if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+      return;
+    }
+
+    setNodes((nds) => nds.filter((node) => !node.selected));
+    setEdges((eds) => eds.filter((edge) => !(edge as any).selected));
+
+    const deletedCount = selectedNodes.length + selectedEdges.length;
+    toast({
+      title: "Deleted",
+      description: `Removed ${deletedCount} item${deletedCount > 1 ? 's' : ''} from canvas`,
+    });
+  }, [nodes, edges, setNodes, setEdges, toast]);
+
+  // Keyboard shortcut for delete
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        // Prevent backspace navigation
+        if (event.key === 'Backspace' && 
+            event.target instanceof HTMLElement && 
+            !['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+          event.preventDefault();
+        }
+        onDeleteSelected();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onDeleteSelected]);
 
   const onAddNode = useCallback(
     (type: string) => {
@@ -141,6 +181,19 @@ const Index = () => {
           <p className="text-xs text-muted-foreground mt-1">
             Investigation Flow • {nodes.length} nodes • {edges.length} connections
           </p>
+        </div>
+
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onDeleteSelected}
+            className="gap-2"
+            disabled={!nodes.some(n => n.selected)}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Selected
+          </Button>
         </div>
 
         <ReactFlow
