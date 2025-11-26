@@ -461,22 +461,24 @@ const Index = () => {
 
   return (
     <div className="flex h-screen w-full bg-background">
-      <FlowManager
-        flows={storage.flows}
-        activeFlowId={storage.activeFlowId}
-        onSelectFlow={handleSelectFlow}
-        onCreateFlow={handleCreateFlow}
-        onDeleteFlow={handleDeleteFlow}
-        onRenameFlow={handleRenameFlow}
-      />
       <NodePalette onAddNode={onAddNode} />
       
-      <div 
-        className="flex-1 relative" 
-        ref={reactFlowWrapper}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-      >
+      <div className="flex-1 flex flex-col">
+        <FlowManager
+          flows={storage.flows}
+          activeFlowId={storage.activeFlowId}
+          onSelectFlow={handleSelectFlow}
+          onCreateFlow={handleCreateFlow}
+          onDeleteFlow={handleDeleteFlow}
+          onRenameFlow={handleRenameFlow}
+        />
+        
+        <div 
+          className="flex-1 relative" 
+          ref={reactFlowWrapper}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+        >
         <input
           ref={fileInputRef}
           type="file"
@@ -485,8 +487,7 @@ const Index = () => {
           className="hidden"
         />
         <div className="absolute top-4 left-4 z-10 bg-card/95 backdrop-blur border border-border rounded-lg p-3 shadow-lg">
-          <h3 className="text-sm font-semibold text-foreground">{activeFlow.name}</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground">
             {nodes.length} nodes • {edges.length} connections • Auto-saved
           </p>
         </div>
@@ -569,6 +570,7 @@ const Index = () => {
           nodeData={editingNode?.data || {}}
           onSave={handleSaveNode}
         />
+      </div>
       </div>
     </div>
   );
