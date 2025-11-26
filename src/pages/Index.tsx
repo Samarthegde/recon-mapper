@@ -15,7 +15,6 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Trash2, Upload, Download, RotateCcw, FileImage, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 import { NodePalette } from '@/components/NodePalette';
 import { FlowManager } from '@/components/FlowManager';
@@ -493,37 +492,6 @@ const Index = () => {
     }
   }, [activeFlow.name, toast]);
 
-  const exportAsPDF = useCallback(async () => {
-    if (!reactFlowWrapper.current) return;
-
-    try {
-      const canvas = await html2canvas(reactFlowWrapper.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height],
-      });
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`flow-${activeFlow.name}-${new Date().toISOString().split('T')[0]}.pdf`);
-
-      toast({
-        title: "Exported as PDF",
-        description: "Flow has been exported as a PDF",
-      });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Could not export as PDF",
-        variant: "destructive",
-      });
-    }
-  }, [activeFlow.name, toast]);
 
 
   return (
@@ -588,10 +556,6 @@ const Index = () => {
               <DropdownMenuItem onClick={exportAsPNG}>
                 <FileImage className="w-4 h-4 mr-2" />
                 Export as PNG
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={exportAsPDF}>
-                <FileText className="w-4 h-4 mr-2" />
-                Export as PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
