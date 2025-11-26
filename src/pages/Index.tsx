@@ -8,10 +8,10 @@ import {
   useNodesState,
   useEdgesState,
   Connection,
-  NodeTypes,
   Node,
   NodeMouseHandler,
 } from '@xyflow/react';
+import type { NodeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Trash2, Upload, Download, RotateCcw, FileImage, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -34,18 +34,18 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Flow, FlowStorage } from '@/types/flow';
 
-const nodeTypes: NodeTypes = {
+const nodeTypes = {
   web: WebEndpointNode,
   ssh: SSHAccessNode,
   rdp: RDPAccessNode,
   credential: CredentialNode,
   artifact: ArtifactNode,
-};
+} as const satisfies NodeTypes;
 
-const initialNodes: Node[] = [
+const initialNodes = [
   {
     id: '1',
-    type: 'web',
+    type: 'web' as const,
     position: { x: 250, y: 100 },
     data: {
       label: 'Target API',
@@ -58,7 +58,7 @@ const initialNodes: Node[] = [
   },
   {
     id: '2',
-    type: 'credential',
+    type: 'credential' as const,
     position: { x: 250, y: 300 },
     data: {
       label: 'API Token',
@@ -67,7 +67,7 @@ const initialNodes: Node[] = [
       width: 256,
     },
   },
-];
+] as Node[];
 
 const initialEdges = [
   { id: 'e1-2', source: '1', target: '2', animated: true },
