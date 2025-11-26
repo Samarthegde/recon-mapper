@@ -121,6 +121,8 @@ const Index = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
   // Handle node changes and sync dimensions to data
   const handleNodesChange = useCallback(
@@ -214,11 +216,11 @@ const Index = () => {
   }, [onDeleteSelected]);
 
   const onAddNode = useCallback(
-    (type: string) => {
+    (type: string, position?: { x: number; y: number }) => {
       const newNode: Node = {
         id: nodeId.toString(),
         type,
-        position: {
+        position: position || {
           x: Math.random() * 400 + 100,
           y: Math.random() * 400 + 100,
         },
@@ -229,6 +231,31 @@ const Index = () => {
       setNodeId((id) => id + 1);
     },
     [nodeId, setNodes]
+  );
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const type = event.dataTransfer.getData('application/reactflow');
+      if (!type || !reactFlowInstance || !reactFlowWrapper.current) {
+        return;
+      }
+
+      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
+
+      onAddNode(type, position);
+    },
+    [reactFlowInstance, onAddNode]
   );
 
   const exportToJSON = useCallback(() => {
@@ -290,7 +317,12 @@ const Index = () => {
     <div className="flex h-screen w-full bg-background">
       <NodePalette onAddNode={onAddNode} />
       
-      <div className="flex-1 relative">
+      <div 
+        className="flex-1 relative" 
+        ref={reactFlowWrapper}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+      >
         <input
           ref={fileInputRef}
           type="file"
@@ -344,6 +376,7 @@ const Index = () => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeDoubleClick={onNodeDoubleClick}
+          onInit={setReactFlowInstance}
           nodeTypes={nodeTypes}
           fitView
           className="bg-canvas-bg"
