@@ -1,4 +1,3 @@
-// Investigation Flow Editor with Export/Import functionality
 import { useCallback, useState, useEffect, useRef } from 'react';
 import {
   ReactFlow,
@@ -14,9 +13,7 @@ import {
   NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Trash2, Upload, FileJson, FileText } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { Trash2, Upload, Download } from 'lucide-react';
 
 import { NodePalette } from '@/components/NodePalette';
 import { WebEndpointNode } from '@/components/nodes/WebEndpointNode';
@@ -123,7 +120,6 @@ const Index = () => {
   const [editingNode, setEditingNode] = useState<Node | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle node changes and sync dimensions to data
@@ -289,43 +285,12 @@ const Index = () => {
     }
   }, [setNodes, setEdges, toast]);
 
-  const exportToPDF = useCallback(async () => {
-    if (!reactFlowWrapper.current) return;
-
-    try {
-      const canvas = await html2canvas(reactFlowWrapper.current, {
-        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--background'),
-        scale: 2,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height],
-      });
-
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`investigation-flow-${new Date().toISOString().split('T')[0]}.pdf`);
-
-      toast({
-        title: "Exported to PDF",
-        description: "Graph has been exported successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to generate PDF",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
 
   return (
     <div className="flex h-screen w-full bg-background">
       <NodePalette onAddNode={onAddNode} />
       
-      <div className="flex-1 relative" ref={reactFlowWrapper}>
+      <div className="flex-1 relative">
         <input
           ref={fileInputRef}
           type="file"
@@ -346,18 +311,8 @@ const Index = () => {
             onClick={exportToJSON}
             className="gap-2"
           >
-            <FileJson className="w-4 h-4" />
-            Export JSON
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportToPDF}
-            className="gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Export PDF
+            <Download className="w-4 h-4" />
+            Export
           </Button>
           
           <Button
@@ -367,7 +322,7 @@ const Index = () => {
             className="gap-2"
           >
             <Upload className="w-4 h-4" />
-            Import JSON
+            Import
           </Button>
           
           <Button
