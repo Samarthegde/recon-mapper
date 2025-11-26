@@ -13,7 +13,7 @@ import {
 } from '@xyflow/react';
 import type { NodeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Trash2, Upload, Download, RotateCcw, FileImage, FileText } from 'lucide-react';
+import { Trash2, Upload, Download, RotateCcw, FileImage, Undo2, Redo2, FileJson } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 import { NodePalette } from '@/components/NodePalette';
@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { useHistory } from '@/hooks/use-history';
 import { Flow, FlowStorage } from '@/types/flow';
 import { CustomNodeDefinition, CustomNodeStorage } from '@/types/customNode';
 
@@ -211,6 +212,9 @@ const Index = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
+  // History management for undo/redo
+  const history = useHistory(activeFlow.nodes, activeFlow.edges, { maxHistorySize: 50 });
+
   // Dynamically register custom nodes
   const dynamicNodeTypes = {
     ...nodeTypes,
@@ -219,15 +223,25 @@ const Index = () => {
     ),
   } as NodeTypes;
 
-  // Update active flow when switching
+  // Update active flow when switching - also reset history
   useEffect(() => {
     const flow = storage.flows.find(f => f.id === storage.activeFlowId);
     if (flow) {
       setNodes(flow.nodes);
       setEdges(flow.edges);
       setNodeId(flow.nodeId);
+      history.clear(flow.nodes, flow.edges);
     }
-  }, [storage.activeFlowId, setNodes, setEdges]);
+  }, [storage.activeFlowId, setNodes, setEdges, history]);
+
+  // Take snapshot for history when nodes or edges change (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      history.takeSnapshot(nodes, edges);
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, history]);
 
   // Save current flow to storage whenever data changes
   useEffect(() => {
@@ -317,23 +331,68 @@ const Index = () => {
     });
   }, [nodes, edges, setNodes, setEdges, toast]);
 
-  // Keyboard shortcut for delete
+  // Keyboard shortcuts for delete, undo, redo
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore if typing in input/textarea
+      const isTyping = event.target instanceof HTMLElement && 
+                      ['INPUT', 'TEXTAREA'].includes(event.target.tagName);
+      
+      // Undo: Ctrl+Z (or Cmd+Z on Mac)
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        handleUndo();
+        return;
+      }
+      
+      // Redo: Ctrl+Y or Ctrl+Shift+Z (or Cmd on Mac)
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.shiftKey && event.key === 'z'))) {
+        event.preventDefault();
+        handleRedo();
+        return;
+      }
+      
+      // Delete
       if (event.key === 'Delete' || event.key === 'Backspace') {
         // Prevent backspace navigation
-        if (event.key === 'Backspace' && 
-            event.target instanceof HTMLElement && 
-            !['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+        if (event.key === 'Backspace' && !isTyping) {
           event.preventDefault();
         }
-        onDeleteSelected();
+        if (!isTyping) {
+          onDeleteSelected();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onDeleteSelected]);
+
+  // Undo handler
+  const handleUndo = useCallback(() => {
+    const previousState = history.undo();
+    if (previousState) {
+      setNodes(previousState.nodes);
+      setEdges(previousState.edges);
+      toast({
+        title: "Undo",
+        description: "Reverted last change",
+      });
+    }
+  }, [history, setNodes, setEdges, toast]);
+
+  // Redo handler
+  const handleRedo = useCallback(() => {
+    const nextState = history.redo();
+    if (nextState) {
+      setNodes(nextState.nodes);
+      setEdges(nextState.edges);
+      toast({
+        title: "Redo",
+        description: "Reapplied change",
+      });
+    }
+  }, [history, setNodes, setEdges, toast]);
 
   const onAddNode = useCallback(
     (type: string, position?: { x: number; y: number }) => {
@@ -601,6 +660,30 @@ const Index = () => {
           <Button
             variant="outline"
             size="sm"
+            onClick={handleUndo}
+            disabled={!history.canUndo}
+            className="gap-2"
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="w-4 h-4" />
+            Undo
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRedo}
+            disabled={!history.canRedo}
+            className="gap-2"
+            title="Redo (Ctrl+Y)"
+          >
+            <Redo2 className="w-4 h-4" />
+            Redo
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onClearCanvas}
             className="gap-2"
           >
@@ -620,7 +703,7 @@ const Index = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={exportToJSON}>
-                <FileText className="w-4 h-4 mr-2" />
+                <FileJson className="w-4 h-4 mr-2" />
                 Export as JSON
               </DropdownMenuItem>
               <DropdownMenuItem onClick={exportAsPNG}>
