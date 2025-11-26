@@ -1,3 +1,4 @@
+// Investigation Flow Editor with Export/Import functionality
 import { useCallback, useState, useEffect, useRef } from 'react';
 import {
   ReactFlow,
@@ -65,6 +66,55 @@ const initialNodes: Node[] = [
 const initialEdges = [
   { id: 'e1-2', source: '1', target: '2', animated: true },
 ];
+
+const getDefaultNodeData = (type: string) => {
+  switch (type) {
+    case 'web':
+      return {
+        label: 'New Endpoint',
+        url: 'https://example.com',
+        method: 'GET',
+        authType: 'none',
+        width: 256,
+      };
+    case 'ssh':
+      return {
+        label: 'SSH Connection',
+        host: '192.168.1.1',
+        port: 22,
+        username: 'root',
+        authType: 'key',
+        width: 256,
+      };
+    case 'rdp':
+      return {
+        label: 'RDP Connection',
+        host: '192.168.1.1',
+        port: 3389,
+        username: 'Administrator',
+        width: 256,
+      };
+    case 'credential':
+      return {
+        label: 'New Credential',
+        type: 'password',
+        username: 'user',
+        value: 'password123',
+        width: 256,
+      };
+    case 'artifact':
+      return {
+        label: 'Evidence File',
+        filePath: '/var/log/evidence.txt',
+        fileType: 'text',
+        hash: 'sha256:abcdef1234567890',
+        size: 2048,
+        width: 256,
+      };
+    default:
+      return { label: 'New Node', width: 256 };
+  }
+};
 
 const Index = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -166,55 +216,6 @@ const Index = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onDeleteSelected]);
-
-  const getDefaultNodeData = (type: string) => {
-    switch (type) {
-      case 'web':
-        return {
-          label: 'New Endpoint',
-          url: 'https://example.com',
-          method: 'GET',
-          authType: 'none',
-          width: 256,
-        };
-      case 'ssh':
-        return {
-          label: 'SSH Connection',
-          host: '192.168.1.1',
-          port: 22,
-          username: 'root',
-          authType: 'key',
-          width: 256,
-        };
-      case 'rdp':
-        return {
-          label: 'RDP Connection',
-          host: '192.168.1.1',
-          port: 3389,
-          username: 'Administrator',
-          width: 256,
-        };
-      case 'credential':
-        return {
-          label: 'New Credential',
-          type: 'password',
-          username: 'user',
-          value: 'password123',
-          width: 256,
-        };
-      case 'artifact':
-        return {
-          label: 'Evidence File',
-          filePath: '/var/log/evidence.txt',
-          fileType: 'text',
-          hash: 'sha256:abcdef1234567890',
-          size: 2048,
-          width: 256,
-        };
-      default:
-        return { label: 'New Node', width: 256 };
-    }
-  };
 
   const onAddNode = useCallback(
     (type: string) => {
