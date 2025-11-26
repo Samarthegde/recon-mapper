@@ -23,6 +23,8 @@ import { SSHAccessNode } from '@/components/nodes/SSHAccessNode';
 import { RDPAccessNode } from '@/components/nodes/RDPAccessNode';
 import { CredentialNode } from '@/components/nodes/CredentialNode';
 import { ArtifactNode } from '@/components/nodes/ArtifactNode';
+import { CustomNode } from '@/components/nodes/CustomNode';
+import { CustomNodeBuilder } from '@/components/CustomNodeBuilder';
 import { NodeEditDialog } from '@/components/NodeEditDialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Flow, FlowStorage } from '@/types/flow';
+import { CustomNodeDefinition, CustomNodeStorage } from '@/types/customNode';
 
 const nodeTypes = {
   web: WebEndpointNode,
@@ -73,7 +76,17 @@ const initialEdges = [
   { id: 'e1-2', source: '1', target: '2', animated: true },
 ];
 
-const getDefaultNodeData = (type: string) => {
+const getDefaultNodeData = (type: string, customNodeDef?: CustomNodeDefinition) => {
+  // Handle custom nodes
+  if (customNodeDef) {
+    return {
+      label: `New ${customNodeDef.name}`,
+      customDefinition: customNodeDef,
+      customData: {},
+      width: 256,
+    };
+  }
+  
   switch (type) {
     case 'web':
       return {
@@ -123,6 +136,29 @@ const getDefaultNodeData = (type: string) => {
 };
 
 const STORAGE_KEY = 'investigation-flows-v2';
+const CUSTOM_NODES_KEY = 'custom-node-types';
+
+const loadCustomNodes = (): CustomNodeDefinition[] => {
+  try {
+    const saved = localStorage.getItem(CUSTOM_NODES_KEY);
+    if (saved) {
+      const storage: CustomNodeStorage = JSON.parse(saved);
+      return storage.customNodes;
+    }
+  } catch (error) {
+    console.error('Failed to load custom nodes:', error);
+  }
+  return [];
+};
+
+const saveCustomNodes = (customNodes: CustomNodeDefinition[]) => {
+  try {
+    const storage: CustomNodeStorage = { customNodes };
+    localStorage.setItem(CUSTOM_NODES_KEY, JSON.stringify(storage));
+  } catch (error) {
+    console.error('Failed to save custom nodes:', error);
+  }
+};
 
 const loadFromStorage = (): FlowStorage => {
   try {
@@ -161,6 +197,8 @@ const saveToStorage = (storage: FlowStorage) => {
 
 const Index = () => {
   const [storage, setStorage] = useState<FlowStorage>(loadFromStorage);
+  const [customNodes, setCustomNodes] = useState<CustomNodeDefinition[]>(loadCustomNodes);
+  const [isCustomNodeBuilderOpen, setIsCustomNodeBuilderOpen] = useState(false);
   const activeFlow = storage.flows.find(f => f.id === storage.activeFlowId) || storage.flows[0];
   
   const [nodes, setNodes, onNodesChange] = useNodesState(activeFlow.nodes);
@@ -172,6 +210,14 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+
+  // Dynamically register custom nodes
+  const dynamicNodeTypes = {
+    ...nodeTypes,
+    ...Object.fromEntries(
+      customNodes.map(cn => [cn.id, CustomNode])
+    ),
+  } as NodeTypes;
 
   // Update active flow when switching
   useEffect(() => {
@@ -291,20 +337,22 @@ const Index = () => {
 
   const onAddNode = useCallback(
     (type: string, position?: { x: number; y: number }) => {
+      const customNodeDef = customNodes.find(cn => cn.id === type);
+      
       const newNode: Node = {
         id: nodeId.toString(),
-        type,
+        type: customNodeDef ? customNodeDef.id : type,
         position: position || {
           x: Math.random() * 400 + 100,
           y: Math.random() * 400 + 100,
         },
-        data: getDefaultNodeData(type),
+        data: getDefaultNodeData(type, customNodeDef),
       };
       
       setNodes((nds) => [...nds, newNode]);
       setNodeId((id) => id + 1);
     },
-    [nodeId, setNodes]
+    [nodeId, customNodes, setNodes]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -492,11 +540,33 @@ const Index = () => {
     }
   }, [activeFlow.name, toast]);
 
+  // Custom Node Management
+  const handleSaveCustomNode = useCallback((definition: CustomNodeDefinition) => {
+    setCustomNodes(prev => {
+      const existing = prev.find(cn => cn.id === definition.id);
+      const updated = existing 
+        ? prev.map(cn => cn.id === definition.id ? definition : cn)
+        : [...prev, definition];
+      
+      saveCustomNodes(updated);
+      
+      toast({
+        title: existing ? "Node Type Updated" : "Node Type Created",
+        description: `Custom node type "${definition.name}" has been ${existing ? 'updated' : 'created'}`,
+      });
+      
+      return updated;
+    });
+  }, [toast]);
 
 
   return (
     <div className="flex h-screen w-full bg-background">
-      <NodePalette onAddNode={onAddNode} />
+      <NodePalette 
+        onAddNode={onAddNode} 
+        customNodes={customNodes}
+        onManageCustomNodes={() => setIsCustomNodeBuilderOpen(true)}
+      />
       
       <div className="flex-1 flex flex-col">
         <FlowManager
@@ -590,7 +660,7 @@ const Index = () => {
           onConnect={onConnect}
           onNodeDoubleClick={onNodeDoubleClick}
           onInit={setReactFlowInstance}
-          nodeTypes={nodeTypes}
+          nodeTypes={dynamicNodeTypes}
           fitView
           className="bg-canvas-bg"
         >
@@ -599,6 +669,12 @@ const Index = () => {
           <MiniMap
             className="bg-card border-border"
             nodeColor={(node) => {
+              // Check if it's a custom node
+              const customNode = customNodes.find(cn => cn.id === node.type);
+              if (customNode) {
+                return customNode.color;
+              }
+              
               switch (node.type) {
                 case 'web': return 'hsl(var(--node-web))';
                 case 'ssh': return 'hsl(var(--node-ssh))';
@@ -617,6 +693,15 @@ const Index = () => {
           nodeType={editingNode?.type || ''}
           nodeData={editingNode?.data || {}}
           onSave={handleSaveNode}
+          customNodeDefinition={
+            editingNode?.type ? customNodes.find(cn => cn.id === editingNode.type) : undefined
+          }
+        />
+
+        <CustomNodeBuilder
+          open={isCustomNodeBuilderOpen}
+          onOpenChange={setIsCustomNodeBuilderOpen}
+          onSave={handleSaveCustomNode}
         />
       </div>
       </div>

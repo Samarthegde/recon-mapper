@@ -13,6 +13,8 @@ import { SSHAccessForm } from './forms/SSHAccessForm';
 import { RDPAccessForm } from './forms/RDPAccessForm';
 import { CredentialForm } from './forms/CredentialForm';
 import { ArtifactForm } from './forms/ArtifactForm';
+import { CustomNodeForm } from './forms/CustomNodeForm';
+import { CustomNodeDefinition } from '@/types/customNode';
 
 interface NodeEditDialogProps {
   open: boolean;
@@ -20,6 +22,7 @@ interface NodeEditDialogProps {
   nodeType: string;
   nodeData: any;
   onSave: (data: any) => void;
+  customNodeDefinition?: CustomNodeDefinition;
 }
 
 const getNodeTypeLabel = (type: string) => {
@@ -39,6 +42,7 @@ export const NodeEditDialog = ({
   nodeType,
   nodeData,
   onSave,
+  customNodeDefinition,
 }: NodeEditDialogProps) => {
   const [editedData, setEditedData] = useState(nodeData);
 
@@ -59,6 +63,11 @@ export const NodeEditDialog = ({
   };
 
   const renderForm = () => {
+    // Check if it's a custom node
+    if (customNodeDefinition) {
+      return <CustomNodeForm data={editedData} onChange={handleChange} definition={customNodeDefinition} />;
+    }
+    
     switch (nodeType) {
       case 'web':
         return <WebEndpointForm data={editedData} onChange={handleChange} />;
