@@ -16,6 +16,7 @@ import '@xyflow/react/dist/style.css';
 import { Trash2, Upload, Download, RotateCcw } from 'lucide-react';
 
 import { NodePalette } from '@/components/NodePalette';
+import { FlowManager } from '@/components/FlowManager';
 import { WebEndpointNode } from '@/components/nodes/WebEndpointNode';
 import { SSHAccessNode } from '@/components/nodes/SSHAccessNode';
 import { RDPAccessNode } from '@/components/nodes/RDPAccessNode';
@@ -24,6 +25,7 @@ import { ArtifactNode } from '@/components/nodes/ArtifactNode';
 import { NodeEditDialog } from '@/components/NodeEditDialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Flow, FlowStorage } from '@/types/flow';
 
 const nodeTypes: NodeTypes = {
   web: WebEndpointNode,
@@ -113,30 +115,50 @@ const getDefaultNodeData = (type: string) => {
   }
 };
 
-const STORAGE_KEY = 'investigation-flow-data';
+const STORAGE_KEY = 'investigation-flows-v2';
 
-const loadFromStorage = () => {
+const loadFromStorage = (): FlowStorage => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const data = JSON.parse(saved);
-      return {
-        nodes: data.nodes || initialNodes,
-        edges: data.edges || initialEdges,
-        nodeId: data.nodeId || 3,
-      };
+      return JSON.parse(saved);
     }
   } catch (error) {
     console.error('Failed to load from storage:', error);
   }
-  return { nodes: initialNodes, edges: initialEdges, nodeId: 3 };
+  
+  // Create default flow
+  const defaultFlow: Flow = {
+    id: '1',
+    name: 'Investigation 1',
+    nodes: initialNodes,
+    edges: initialEdges,
+    nodeId: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  
+  return {
+    flows: [defaultFlow],
+    activeFlowId: '1',
+  };
+};
+
+const saveToStorage = (storage: FlowStorage) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
+  } catch (error) {
+    console.error('Failed to save to storage:', error);
+  }
 };
 
 const Index = () => {
-  const savedData = loadFromStorage();
-  const [nodes, setNodes, onNodesChange] = useNodesState(savedData.nodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(savedData.edges);
-  const [nodeId, setNodeId] = useState(savedData.nodeId);
+  const [storage, setStorage] = useState<FlowStorage>(loadFromStorage);
+  const activeFlow = storage.flows.find(f => f.id === storage.activeFlowId) || storage.flows[0];
+  
+  const [nodes, setNodes, onNodesChange] = useNodesState(activeFlow.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(activeFlow.edges);
+  const [nodeId, setNodeId] = useState(activeFlow.nodeId);
   const [editingNode, setEditingNode] = useState<Node | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -144,13 +166,29 @@ const Index = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
-  // Save to localStorage whenever data changes
+  // Update active flow when switching
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges, nodeId }));
-    } catch (error) {
-      console.error('Failed to save to storage:', error);
+    const flow = storage.flows.find(f => f.id === storage.activeFlowId);
+    if (flow) {
+      setNodes(flow.nodes);
+      setEdges(flow.edges);
+      setNodeId(flow.nodeId);
     }
+  }, [storage.activeFlowId, setNodes, setEdges]);
+
+  // Save current flow to storage whenever data changes
+  useEffect(() => {
+    if (!storage.activeFlowId) return;
+    
+    const updatedFlows = storage.flows.map(flow =>
+      flow.id === storage.activeFlowId
+        ? { ...flow, nodes, edges, nodeId, updatedAt: new Date().toISOString() }
+        : flow
+    );
+    
+    const newStorage = { ...storage, flows: updatedFlows };
+    setStorage(newStorage);
+    saveToStorage(newStorage);
   }, [nodes, edges, nodeId]);
 
   // Handle node changes and sync dimensions to data
@@ -287,6 +325,75 @@ const Index = () => {
     [reactFlowInstance, onAddNode]
   );
 
+  const handleSelectFlow = useCallback((flowId: string) => {
+    setStorage(prev => ({ ...prev, activeFlowId: flowId }));
+  }, []);
+
+  const handleCreateFlow = useCallback((name: string) => {
+    const newFlow: Flow = {
+      id: Date.now().toString(),
+      name,
+      nodes: [],
+      edges: [],
+      nodeId: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    const newStorage: FlowStorage = {
+      flows: [...storage.flows, newFlow],
+      activeFlowId: newFlow.id,
+    };
+    
+    setStorage(newStorage);
+    saveToStorage(newStorage);
+    
+    toast({
+      title: "Flow Created",
+      description: `"${name}" has been created`,
+    });
+  }, [storage.flows, toast]);
+
+  const handleDeleteFlow = useCallback((flowId: string) => {
+    const flowToDelete = storage.flows.find(f => f.id === flowId);
+    const remainingFlows = storage.flows.filter(f => f.id !== flowId);
+    
+    let newActiveFlowId = storage.activeFlowId;
+    if (flowId === storage.activeFlowId) {
+      newActiveFlowId = remainingFlows[0]?.id || null;
+    }
+    
+    const newStorage: FlowStorage = {
+      flows: remainingFlows,
+      activeFlowId: newActiveFlowId,
+    };
+    
+    setStorage(newStorage);
+    saveToStorage(newStorage);
+    
+    toast({
+      title: "Flow Deleted",
+      description: `"${flowToDelete?.name}" has been deleted`,
+    });
+  }, [storage, toast]);
+
+  const handleRenameFlow = useCallback((flowId: string, newName: string) => {
+    const updatedFlows = storage.flows.map(flow =>
+      flow.id === flowId
+        ? { ...flow, name: newName, updatedAt: new Date().toISOString() }
+        : flow
+    );
+    
+    const newStorage = { ...storage, flows: updatedFlows };
+    setStorage(newStorage);
+    saveToStorage(newStorage);
+    
+    toast({
+      title: "Flow Renamed",
+      description: `Renamed to "${newName}"`,
+    });
+  }, [storage, toast]);
+
   const onClearCanvas = useCallback(() => {
     setNodes([]);
     setEdges([]);
@@ -354,6 +461,14 @@ const Index = () => {
 
   return (
     <div className="flex h-screen w-full bg-background">
+      <FlowManager
+        flows={storage.flows}
+        activeFlowId={storage.activeFlowId}
+        onSelectFlow={handleSelectFlow}
+        onCreateFlow={handleCreateFlow}
+        onDeleteFlow={handleDeleteFlow}
+        onRenameFlow={handleRenameFlow}
+      />
       <NodePalette onAddNode={onAddNode} />
       
       <div 
@@ -370,8 +485,9 @@ const Index = () => {
           className="hidden"
         />
         <div className="absolute top-4 left-4 z-10 bg-card/95 backdrop-blur border border-border rounded-lg p-3 shadow-lg">
+          <h3 className="text-sm font-semibold text-foreground">{activeFlow.name}</h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Investigation Flow • {nodes.length} nodes • {edges.length} connections • Auto-saved
+            {nodes.length} nodes • {edges.length} connections • Auto-saved
           </p>
         </div>
 
