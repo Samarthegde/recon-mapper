@@ -35,6 +35,11 @@ const nodeTypes = [
 ];
 
 export const NodePalette = ({ onAddNode }: NodePaletteProps) => {
+  const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div className="w-64 h-full bg-card border-r border-border flex flex-col">
       <div className="p-4 border-b border-border">
@@ -53,10 +58,12 @@ export const NodePalette = ({ onAddNode }: NodePaletteProps) => {
                 return (
                   <Card
                     key={node.type}
-                    className="p-3 cursor-pointer hover:bg-secondary/50 transition-all border-l-2 hover:border-l-4"
+                    className="p-3 cursor-grab active:cursor-grabbing hover:bg-secondary/50 transition-all border-l-2 hover:border-l-4 animate-scale-in"
                     style={{
                       borderLeftColor: `hsl(var(--${node.color}))`,
                     }}
+                    draggable
+                    onDragStart={(event) => onDragStart(event, node.type)}
                     onClick={() => onAddNode(node.type)}
                   >
                     <div className="flex items-center gap-3">
@@ -84,9 +91,9 @@ export const NodePalette = ({ onAddNode }: NodePaletteProps) => {
       <div className="p-4 text-xs text-muted-foreground">
         <div className="space-y-1">
           <p className="font-semibold text-foreground">Quick Tips:</p>
-          <p>• Click nodes to add to canvas</p>
-          <p>• Drag nodes to position</p>
-          <p>• Connect with handles</p>
+          <p>• Drag nodes to canvas</p>
+          <p>• Double-click to edit</p>
+          <p>• Delete/Backspace to remove</p>
         </div>
       </div>
     </div>
