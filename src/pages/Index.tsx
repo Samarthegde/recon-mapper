@@ -13,7 +13,9 @@ import {
   NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Trash2, Upload, Download, RotateCcw } from 'lucide-react';
+import { Trash2, Upload, Download, RotateCcw, FileImage, FileText } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 import { NodePalette } from '@/components/NodePalette';
 import { FlowManager } from '@/components/FlowManager';
@@ -24,6 +26,12 @@ import { CredentialNode } from '@/components/nodes/CredentialNode';
 import { ArtifactNode } from '@/components/nodes/ArtifactNode';
 import { NodeEditDialog } from '@/components/NodeEditDialog';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Flow, FlowStorage } from '@/types/flow';
 
@@ -458,6 +466,65 @@ const Index = () => {
     }
   }, [setNodes, setEdges, toast]);
 
+  const exportAsPNG = useCallback(async () => {
+    if (!reactFlowWrapper.current) return;
+
+    try {
+      const canvas = await html2canvas(reactFlowWrapper.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `flow-${activeFlow.name}-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+
+      toast({
+        title: "Exported as PNG",
+        description: "Flow has been exported as an image",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Could not export as PNG",
+        variant: "destructive",
+      });
+    }
+  }, [activeFlow.name, toast]);
+
+  const exportAsPDF = useCallback(async () => {
+    if (!reactFlowWrapper.current) return;
+
+    try {
+      const canvas = await html2canvas(reactFlowWrapper.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`flow-${activeFlow.name}-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      toast({
+        title: "Exported as PDF",
+        description: "Flow has been exported as a PDF",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Could not export as PDF",
+        variant: "destructive",
+      });
+    }
+  }, [activeFlow.name, toast]);
+
 
   return (
     <div className="flex h-screen w-full bg-background">
@@ -502,15 +569,32 @@ const Index = () => {
             <RotateCcw className="w-4 h-4" />
             Clear
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportToJSON}
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToJSON}>
+                <FileText className="w-4 h-4 mr-2" />
+                Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportAsPNG}>
+                <FileImage className="w-4 h-4 mr-2" />
+                Export as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportAsPDF}>
+                <FileText className="w-4 h-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           <Button
             variant="outline"
