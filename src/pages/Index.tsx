@@ -13,7 +13,7 @@ import {
   NodeMouseHandler,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Trash2, Upload, Download } from 'lucide-react';
+import { Trash2, Upload, Download, RotateCcw } from 'lucide-react';
 
 import { NodePalette } from '@/components/NodePalette';
 import { WebEndpointNode } from '@/components/nodes/WebEndpointNode';
@@ -113,16 +113,45 @@ const getDefaultNodeData = (type: string) => {
   }
 };
 
+const STORAGE_KEY = 'investigation-flow-data';
+
+const loadFromStorage = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      return {
+        nodes: data.nodes || initialNodes,
+        edges: data.edges || initialEdges,
+        nodeId: data.nodeId || 3,
+      };
+    }
+  } catch (error) {
+    console.error('Failed to load from storage:', error);
+  }
+  return { nodes: initialNodes, edges: initialEdges, nodeId: 3 };
+};
+
 const Index = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [nodeId, setNodeId] = useState(3);
+  const savedData = loadFromStorage();
+  const [nodes, setNodes, onNodesChange] = useNodesState(savedData.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(savedData.edges);
+  const [nodeId, setNodeId] = useState(savedData.nodeId);
   const [editingNode, setEditingNode] = useState<Node | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ nodes, edges, nodeId }));
+    } catch (error) {
+      console.error('Failed to save to storage:', error);
+    }
+  }, [nodes, edges, nodeId]);
 
   // Handle node changes and sync dimensions to data
   const handleNodesChange = useCallback(
@@ -258,6 +287,16 @@ const Index = () => {
     [reactFlowInstance, onAddNode]
   );
 
+  const onClearCanvas = useCallback(() => {
+    setNodes([]);
+    setEdges([]);
+    setNodeId(1);
+    toast({
+      title: "Canvas Cleared",
+      description: "All nodes and connections have been removed",
+    });
+  }, [setNodes, setEdges, toast]);
+
   const exportToJSON = useCallback(() => {
     const data = {
       nodes,
@@ -332,11 +371,20 @@ const Index = () => {
         />
         <div className="absolute top-4 left-4 z-10 bg-card/95 backdrop-blur border border-border rounded-lg p-3 shadow-lg">
           <p className="text-xs text-muted-foreground mt-1">
-            Investigation Flow • {nodes.length} nodes • {edges.length} connections
+            Investigation Flow • {nodes.length} nodes • {edges.length} connections • Auto-saved
           </p>
         </div>
 
         <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClearCanvas}
+            className="gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Clear
+          </Button>
           <Button
             variant="outline"
             size="sm"
