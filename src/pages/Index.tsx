@@ -242,7 +242,8 @@ const Index = () => {
     }, 500);
     
     return () => clearTimeout(timeoutId);
-  }, [nodes, edges, history]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges]);
 
   // Save current flow to storage whenever data changes
   useEffect(() => {
