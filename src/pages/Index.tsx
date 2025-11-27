@@ -13,7 +13,7 @@ import {
 } from '@xyflow/react';
 import type { NodeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Trash2, Upload, Download, RotateCcw, FileImage, Undo2, Redo2, FileJson } from 'lucide-react';
+import { Trash2, Upload, RotateCcw, FileImage, Undo2, Redo2, FileJson, Settings } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 import { NodePalette } from '@/components/NodePalette';
@@ -31,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
@@ -657,51 +658,25 @@ const Index = () => {
         </div>
 
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleUndo}
-            disabled={!history.canUndo}
-            className="gap-2"
-            title="Undo (Ctrl+Z)"
-          >
-            <Undo2 className="w-4 h-4" />
-            Undo
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRedo}
-            disabled={!history.canRedo}
-            className="gap-2"
-            title="Redo (Ctrl+Y)"
-          >
-            <Redo2 className="w-4 h-4" />
-            Redo
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClearCanvas}
-            className="gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Clear
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Export
+              <Button variant="outline" size="sm" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Actions
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleUndo} disabled={!history.canUndo}>
+                <Undo2 className="w-4 h-4 mr-2" />
+                Undo
+                <span className="ml-auto text-xs text-muted-foreground">⌘Z</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleRedo} disabled={!history.canRedo}>
+                <Redo2 className="w-4 h-4 mr-2" />
+                Redo
+                <span className="ml-auto text-xs text-muted-foreground">⌘Y</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={exportToJSON}>
                 <FileJson className="w-4 h-4 mr-2" />
                 Export as JSON
@@ -710,18 +685,17 @@ const Index = () => {
                 <FileImage className="w-4 h-4 mr-2" />
                 Export as PNG
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-4 h-4 mr-2" />
+                Import JSON
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onClearCanvas} className="text-destructive focus:text-destructive">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Clear Canvas
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            className="gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
           
           <Button
             variant="destructive"
@@ -731,7 +705,7 @@ const Index = () => {
             disabled={!nodes.some(n => n.selected)}
           >
             <Trash2 className="w-4 h-4" />
-            Delete Selected
+            Delete
           </Button>
         </div>
 
